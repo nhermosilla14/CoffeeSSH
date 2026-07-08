@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name" translatable="false">CoffeeSSH</string>
+
+    <string name="back">Back</string>
+    <string name="ok">OK</string>
+    <string name="placeholder_coming_soon">Coming soon — milestone M1</string>
+
+    <string name="dashboard_connections_title">Connections</string>
+    <string name="dashboard_connections_subtitle">Manage your connections</string>
+    <string name="dashboard_frequent_title">Frequently Used</string>
+    <string name="dashboard_frequent_subtitle">Your most used connections</string>
+    <string name="dashboard_frequent_empty">No connections yet — add one and it will show up here</string>
+    <string name="dashboard_settings_title">Settings</string>
+    <string name="dashboard_settings_subtitle">Personalise your sessions</string>
+    <string name="dashboard_help_title">Help</string>
+    <string name="dashboard_help_subtitle">About this app</string>
+
+    <string name="about_title">About CoffeeSSH</string>
+    <string name="about_text">CoffeeSSH 0.1.0 (M0)\n\nAn SSH client for Android, with a warm coffee flavour.</string>
+</resources>
