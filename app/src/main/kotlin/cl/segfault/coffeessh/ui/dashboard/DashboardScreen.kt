@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import cl.segfault.coffeessh.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +45,9 @@ import cl.segfault.coffeessh.R
 fun DashboardScreen(
     onOpenConnections: () -> Unit,
     onOpenSettings: () -> Unit,
+    viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory),
 ) {
+    val frequent by viewModel.frequent.collectAsStateWithLifecycle()
     var showAbout by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -82,14 +86,45 @@ fun DashboardScreen(
                     titleRes = R.string.dashboard_frequent_title,
                     subtitleRes = R.string.dashboard_frequent_subtitle,
                     icon = Icons.Filled.Star,
-                    onClick = {},
+                    onClick = onOpenConnections,
                 ) {
-                    Text(
-                        text = stringResource(R.string.dashboard_frequent_empty),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 12.dp),
-                    )
+                    if (frequent.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.dashboard_frequent_empty),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    } else {
+                        Column(modifier = Modifier.padding(top = 12.dp)) {
+                            frequent.forEach { item ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 6.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Public,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(28.dp),
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                    )
+                                    Column(modifier = Modifier.padding(start = 16.dp)) {
+                                        Text(
+                                            text = item.connection.nickname ?: item.connection.host,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                        )
+                                        Text(
+                                            text = "${item.connection.host}:${item.connection.port}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             item {

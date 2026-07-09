@@ -1,7 +1,13 @@
 <resources>
     <string name="back">Volver</string>
     <string name="ok">Aceptar</string>
-    <string name="placeholder_coming_soon">Próximamente — hito M1</string>
+    <string name="cancel">Cancelar</string>
+    <string name="save">Guardar</string>
+    <string name="create">Crear</string>
+    <string name="rename">Renombrar</string>
+    <string name="add">Añadir</string>
+    <string name="more_options">Más opciones</string>
+    <string name="placeholder_coming_soon">Próximamente</string>
 
     <string name="dashboard_connections_title">Conexiones</string>
     <string name="dashboard_connections_subtitle">Gestiona tus conexiones</string>
@@ -14,5 +20,49 @@
     <string name="dashboard_help_subtitle">Acerca de esta aplicación</string>
 
     <string name="about_title">Acerca de CoffeeSSH</string>
-    <string name="about_text">CoffeeSSH 0.1.0 (M0)\n\nUn cliente SSH para Android, con sabor a café.</string>
+    <string name="about_text">CoffeeSSH 0.1.0 (M1)\n\nUn cliente SSH para Android, con sabor a café.</string>
+
+    <string name="connections_tab">Conexiones</string>
+    <string name="identities_tab">Identidades</string>
+    <string name="ungrouped">Sin grupo</string>
+    <string name="no_identity">Sin identidad</string>
+    <string name="connections_empty">Aún no hay conexiones.\nToca + para crear una.</string>
+    <string name="identities_empty">Aún no hay identidades.\nToca + para crear una.</string>
+    <string name="manage_groups">Gestionar grupos</string>
+
+    <string name="action_edit">Editar</string>
+    <string name="action_duplicate">Duplicar</string>
+    <string name="action_delete">Eliminar</string>
+
+    <string name="delete_connection_title">¿Eliminar la conexión?</string>
+    <string name="delete_connection_text">Se eliminará «%1$s».</string>
+    <string name="delete_identity_title">¿Eliminar la identidad?</string>
+    <string name="delete_identity_text">Se eliminará «%1$s». Las conexiones que la usan se conservarán, sin identidad.</string>
+
+    <string name="new_connection">Nueva conexión</string>
+    <string name="edit_connection">Editar conexión</string>
+    <string name="nickname_label">Alias (opcional)</string>
+    <string name="host_label">Servidor</string>
+    <string name="port_label">Puerto</string>
+    <string name="identity_label">Identidad</string>
+    <string name="identity_none">Ninguna</string>
+    <string name="groups_label">Grupos</string>
+    <string name="new_group">Nuevo grupo</string>
+    <string name="group_name_label">Nombre del grupo</string>
+
+    <string name="new_identity">Nueva identidad</string>
+    <string name="edit_identity">Editar identidad</string>
+    <string name="identity_nickname_label">Alias</string>
+    <string name="username_label">Usuario</string>
+    <string name="password_label">Contraseña</string>
+    <string name="private_key_label">Clave privada</string>
+    <string name="private_key_hint">Pega una clave privada OpenSSH/PEM. La generación e importación llegarán en un hito posterior.</string>
+    <string name="show_password">Mostrar contraseña</string>
+    <string name="hide_password">Ocultar contraseña</string>
+
+    <string name="groups_title">Grupos</string>
+    <string name="groups_empty">Aún no hay grupos.\nToca + para crear uno.</string>
+    <string name="rename_group">Renombrar grupo</string>
+    <string name="delete_group_title">¿Eliminar el grupo?</string>
+    <string name="delete_group_text">Las conexiones de «%1$s» no se eliminarán.</string>
 </resources>

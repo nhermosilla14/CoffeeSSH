@@ -162,11 +162,24 @@ i18n: all strings in `strings.xml` (`values/` EN, `values-es/` ES) from day one.
   - Toolchain pinned: Gradle 9.6.1 wrapper + Temurin JDK 21 at `~/.jdks/jdk-21.0.11+10`
     (system JDK 26 unsupported by AGP; export `JAVA_HOME` before `./gradlew`).
 
-### M1 — Data & CRUD
+### M1 — Data & CRUD — DONE (2026-07-08)
 - Room schema + migrations baseline, Keystore crypto helper
 - Groups, Connections, Identities CRUD screens (no SSH yet)
 - Password/key fields encrypted at rest
 - **Done when**: connections/identities/groups can be created, edited, grouped, and survive restarts.
+- Build notes from execution:
+  - Room + KSP: `androidx.room` Gradle plugin (2.8.4) handles schema export via
+    `room { schemaDirectory(...) }`; KSP 2.3.9 matches Kotlin 2.4.0 built into AGP 9.
+  - `AppContainer` is a hand-rolled DI container (no Hilt/Koin) — small app, kept simple.
+  - Verified with 10 instrumented tests (`connectedDebugAndroidTest`): 5 crypto round-trip/
+    tamper-detection tests, 5 Room DAO tests (cascade/SET_NULL FK behavior, frequent-sort query).
+  - Manually verified full CRUD + persistence-across-process-death on a **physical device**
+    (Motorola Edge 30 Neo, Android 14) over USB, not just the emulator — confirmed dark theme
+    and Spanish locale auto-selection also work correctly outside the AVD.
+  - Process note: automated `adb input tap` on a personal physical device can hit floating
+    overlays (chat bubbles, assistive touch) not present on a clean AVD — one such tap briefly
+    opened Telegram. Going forward, physical-device interaction is user-driven; only read-only
+    `adb screencap` is used from the agent side to verify results.
 
 ### M2 — Terminal engine
 - `:terminal` engine per section 6, with unit-test suite
