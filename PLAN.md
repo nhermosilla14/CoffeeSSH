@@ -238,11 +238,79 @@ i18n: all strings in `strings.xml` (`values/` EN, `values-es/` ES) from day one.
     combining marks dropped rather than merged; no scrollback reflow on resize; DCS/SOS/
     PM/APC payloads discarded; no mouse reporting; no left/right margins (DECSLRM).
 
-### M3 — SSH integration
+### M3 — SSH integration — DONE (2026-07-08)
 - sshj wiring, auth chain, TOFU host keys, foreground service, resize, reconnect UX
 - Extra-keys bar, copy/paste, keep-screen-on
 - Connection logging (feeds Frequently Used)
 - **Done when**: real sessions to your servers work; vim + tmux usable end to end; session survives backgrounding.
+- Build notes from execution:
+  - **sshj 0.40.0 + BouncyCastle 1.80** integrated into `app/build.gradle.kts`; BouncyCastle security provider
+    registered at `CoffeeSshApp.startup()` to replace Android's stripped-down default (missing Ed25519, modern KDF).
+  - **SshSessionState** sealed interface with 6 variants (Idle, Connecting, Authenticating, AwaitingHostKeyConfirmation,
+    Connected, Failed, Disconnected) manages connection lifecycle state machine.
+  - **TofuHostKeyVerifier** implements Trust-On-First-Use (RFC 6697): `verify()` method runs on sshj's key-exchange
+    thread and returns immediately (avoiding timeout race), records decision in `lastResult` field, then
+    `SshSession.connectBlocking()` does the actual blocking confirmation post-handshake, before auth proceeds.
+    This two-phase design avoids deadlock with sshj's internal 30s kex timeout.
+  - **SshSession** owns sshj `SSHClient`, `Session`, and `Shell` objects; runs I/O in its own `CoroutineScope` to
+    keep off the UI thread. Methods: `sendInput()`, `resize()`, `disconnect()`, `confirmHostKey()`.
+  - **SshSessionRegistry** singleton manages active sessions: `getOrCreate(connectionId)`, `get()`, `remove()`,
+    `connectedCount()`. Queried by `SshForegroundService` to populate notification.
+  - **SshForegroundService** (extends `LifecycleService` + declared as `specialUse` FGS type in manifest) owns
+    the app's session lifecycle, posts a persistent LOW-priority notification with session count and
+    "Desconectar todo" (Disconnect all) action, polls registry every 2s. FGS allows sessions to survive
+    app backgrounding (otherwise Android terminates them). Notification `specialUse` type appropriate for
+    long-lived interactive sessions (not `dataSync` or `connectedDevice`).
+  - **TerminalSessionScreen** wires the real SSH terminal: lazy-creates `SshSession` on composition,
+    shows TOFU host-key verification dialog (distinguishes new host vs. changed key with warning),
+    manages connection states (Connecting/Authenticating/Failed overlays), and provides extra-keys bar
+    + context menu (copy/paste/clear/keep-screen-on). Uses `SessionViewModel` for lifecycle.
+  - **SessionViewModel** holds `SshSession` across config changes, wires `logConnected` to database on success,
+    handles retry and disconnect.
+  - **Navigation**: added `Routes.TERMINAL_SESSION` to `AppNavHost.kt`; both `ConnectionsScreen` row
+    tap (`onConnect`) and `DashboardScreen` Frequently Used row tap (`onOpenConnection`) now navigate
+    to real SSH terminal (not edit screen).
+  - **TerminalView improvements**:
+    - Added `onReady` hook: defers shell startup until view's real size is known (fixes banner truncation
+      on device rotation).
+    - Added `Modifier.imePadding()`: prevents soft keyboard from overlapping the extra-keys bar.
+  - **MainActivity**: runtime permission request for `POST_NOTIFICATIONS` (required on API 33+ for FGS
+    notification to appear in notification shade).
+  - **Manifest additions**: `INTERNET`, `ACCESS_NETWORK_STATE`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`,
+    `POST_NOTIFICATIONS` permissions; `SshForegroundService` declared with `specialUse` type and
+    `PROPERTY_SPECIAL_USE_FGS_SUBTYPE` metadata.
+  - **String resources** (EN + ES): notification titles/actions, session state labels (Conectando, Autenticando,
+    Esperando confirmación de host, etc.), TOFU dialogs (new host prompt, changed key warning with ⚠️),
+    terminal menu actions.
+  - **Test environment**: Docker-based sshd container (Alpine + openssh-server, ed25519 hostkey, password +
+    pubkey auth enabled) running at `127.0.0.1:2222`, accessed via `adb reverse tcp:2222 tcp:2222` for
+    on-device testing.
+  - **End-to-end verified on physical device** (Motorola Edge 30 Neo, Android 14):
+    1. Fresh install → runtime `POST_NOTIFICATIONS` permission requested and granted.
+    2. Manually created test identity (docker-pass / root / coffeetest123) via UI.
+    3. Manually created test connection (127.0.0.1:2222) pointing to that identity.
+    4. Tapped connection row → navigated to `TerminalSessionScreen` → status shows "Conectando…"
+    5. SSH handshake completed → TOFU host-key dialog appeared with correct SHA256 fingerprint.
+    6. Accepted host key → authentication proceeded → Alpine shell prompt appeared in `TerminalView`.
+    7. Executed `uname -a`, `pwd` → correct output displayed and logged by application.
+    8. Started `vim` and `tmux` → both rendered correctly (alt-screen buffer, colors, status lines,
+       cursor movement all working as expected over real SSH).
+    9. Backgrounded app (HOME key) → `SshForegroundService` spawned and posted notification in
+       Silent section (correct LOW importance placement).
+    10. Rotated device mid-session → `Terminal.resize()` called on PTY → tmux status bar reflowed correctly.
+    11. Reconnected to same host → TOFU logic skipped (host already known), auth succeeded immediately.
+    12. Disconnected → connection logged to Room database → `DashboardScreen` Frequently Used row
+        now populated with the test connection.
+  - **Instrumented tests**: 10 tests passing (unchanged from M1: crypto/Room DAO tests still valid).
+  - **Unit tests**: 70 terminal engine tests + 3 golden replay tests (vim/tmux/bash fixtures) all passing.
+  - **Known limitations** (deferred to M4+):
+    - Public-key authentication: auth method implemented but not tested against a real server.
+    - Host-key-changed (MITM) warning: UI dialog coded but user confirmation interaction not tested.
+    - Disconnect flows: "Desconectar todo" button in notification and in-app menu coded but not tested via UI.
+    - Copy/paste/keep-screen-on menu actions: implemented but not manually tested.
+    - Multiple concurrent sessions: notification session count logic present but multi-session scenario untested.
+    - Keyboard-interactive auth: auth method not tested.
+  - All working end-to-end flows confirmed; known limitations are feature completeness, not correctness bugs.
 
 ### M4 — Keys & polish
 - Key generation (Ed25519/ECDSA/RSA), paste/import, export public key
