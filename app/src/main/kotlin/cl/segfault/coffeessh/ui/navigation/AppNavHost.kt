@@ -15,6 +15,7 @@ import cl.segfault.coffeessh.ui.dashboard.DashboardScreen
 import cl.segfault.coffeessh.ui.groups.GroupsScreen
 import cl.segfault.coffeessh.ui.identities.IdentityEditorScreen
 import cl.segfault.coffeessh.ui.terminal.TerminalDemoScreen
+import cl.segfault.coffeessh.ui.terminal.TerminalSessionScreen
 
 object Routes {
     const val DASHBOARD = "dashboard"
@@ -26,9 +27,11 @@ object Routes {
     const val IDENTITY_NEW = "identity/new"
     const val IDENTITY_EDIT = "identity/{identityId}"
     const val TERMINAL_DEMO = "terminal/demo"
+    const val TERMINAL_SESSION = "terminal/session/{connectionId}"
 
     fun connectionEdit(id: Long) = "connection/$id"
     fun identityEdit(id: Long) = "identity/$id"
+    fun terminalSession(id: Long) = "terminal/session/$id"
 }
 
 @Composable
@@ -41,12 +44,14 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             DashboardScreen(
                 onOpenConnections = { navController.navigate(Routes.CONNECTIONS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                onOpenConnection = { navController.navigate(Routes.terminalSession(it)) },
             )
         }
         composable(Routes.CONNECTIONS) {
             ConnectionsScreen(
                 onBack = { navController.popBackStack() },
                 onNewConnection = { navController.navigate(Routes.CONNECTION_NEW) },
+                onConnect = { navController.navigate(Routes.terminalSession(it)) },
                 onEditConnection = { navController.navigate(Routes.connectionEdit(it)) },
                 onNewIdentity = { navController.navigate(Routes.IDENTITY_NEW) },
                 onEditIdentity = { navController.navigate(Routes.identityEdit(it)) },
@@ -77,6 +82,16 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(Routes.TERMINAL_DEMO) {
             TerminalDemoScreen(onBack = { navController.popBackStack() })
+        }
+        composable(
+            route = Routes.TERMINAL_SESSION,
+            arguments = listOf(navArgument("connectionId") { type = NavType.LongType }),
+        ) { backStackEntry ->
+            val connectionId = backStackEntry.arguments?.getLong("connectionId") ?: return@composable
+            TerminalSessionScreen(
+                connectionId = connectionId,
+                onBack = { navController.popBackStack() },
+            )
         }
         composable(Routes.SETTINGS) {
             PlaceholderScreen(

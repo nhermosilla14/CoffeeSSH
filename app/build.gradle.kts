@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.service)
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
@@ -61,6 +62,11 @@ dependencies {
 
     implementation(libs.room.runtime)
     ksp(libs.room.compiler)
+
+    implementation(libs.sshj)
+    implementation(libs.bcprov)
+    implementation(libs.bcpkix)
+    runtimeOnly(libs.slf4j.nop)
 
     debugImplementation(libs.compose.ui.tooling)
 

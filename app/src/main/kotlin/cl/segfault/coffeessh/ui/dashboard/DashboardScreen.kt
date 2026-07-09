@@ -1,6 +1,7 @@
 package cl.segfault.coffeessh.ui.dashboard
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,6 +46,7 @@ import cl.segfault.coffeessh.R
 fun DashboardScreen(
     onOpenConnections: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenConnection: (Long) -> Unit,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory),
 ) {
     val frequent by viewModel.frequent.collectAsStateWithLifecycle()
@@ -102,6 +104,7 @@ fun DashboardScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
                                         .fillMaxWidth()
+                                        .clickable { onOpenConnection(item.connection.id) }
                                         .padding(vertical = 6.dp),
                                 ) {
                                     Icon(

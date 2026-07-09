@@ -69,4 +69,32 @@
     <string name="rename_group">Rename group</string>
     <string name="delete_group_title">Delete group?</string>
     <string name="delete_group_text">Connections in “%1$s” will not be deleted.</string>
+
+    <string name="ssh_notification_channel_name">SSH sessions</string>
+    <string name="ssh_notification_connecting">Connecting…</string>
+    <string name="ssh_notification_one_session">1 active session</string>
+    <string name="ssh_notification_n_sessions">%1$d active sessions</string>
+    <string name="ssh_notification_disconnect_all">Disconnect all</string>
+
+    <string name="session_connecting">Connecting…</string>
+    <string name="session_authenticating">Authenticating…</string>
+    <string name="session_connected">Connected</string>
+    <string name="session_disconnected">Disconnected</string>
+    <string name="session_failed">Connection failed</string>
+    <string name="session_retry">Retry</string>
+    <string name="session_no_identity">This connection has no identity attached. Edit it and choose an identity with a password or private key.</string>
+
+    <string name="host_key_new_title">Unknown host</string>
+    <string name="host_key_new_text">%1$s:%2$d presented a %3$s key for the first time:\n\n%4$s\n\nAccept and remember it?</string>
+    <string name="host_key_changed_title">⚠️ Host key has changed</string>
+    <string name="host_key_changed_text">%1$s:%2$d presented a DIFFERENT %3$s key than the one stored previously:\n\n%4$s\n\nThis can mean the server was reinstalled — or that someone is intercepting the connection. Only accept if you are sure.</string>
+    <string name="host_key_accept">Accept</string>
+    <string name="host_key_reject">Reject</string>
+
+    <string name="terminal_action_copy_screen">Copy screen text</string>
+    <string name="terminal_action_paste">Paste</string>
+    <string name="terminal_action_keep_screen_on">Keep screen on</string>
+    <string name="terminal_action_clear">Clear</string>
+    <string name="terminal_action_disconnect">Disconnect</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 </resources>

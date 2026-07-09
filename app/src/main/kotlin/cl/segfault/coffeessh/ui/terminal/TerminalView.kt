@@ -47,6 +47,10 @@ class TerminalView @JvmOverloads constructor(
     var onReady: (() -> Unit)? = null
     private var readyFired = false
 
+    /** Fires after every resize (including the first) with the new grid dimensions - wire
+     * this to a session's window-change request; safe to leave null (e.g. the M2 demo). */
+    var onResize: ((rows: Int, cols: Int) -> Unit)? = null
+
     var defaultFg: Int = 0xFFE8E0D6.toInt()
         set(value) { field = value; invalidate() }
     var defaultBg: Int = 0xFF1A120C.toInt()
@@ -107,6 +111,7 @@ class TerminalView @JvmOverloads constructor(
         val cols = (width / cellWidth).toInt().coerceAtLeast(1)
         val rows = (height / cellHeight).toInt().coerceAtLeast(1)
         terminal?.resize(rows, cols)
+        onResize?.invoke(rows, cols)
         if (!readyFired) {
             readyFired = true
             onReady?.invoke()

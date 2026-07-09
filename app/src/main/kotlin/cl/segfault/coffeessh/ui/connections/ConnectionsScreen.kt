@@ -72,6 +72,7 @@ private const val UNGROUPED_KEY = -1L
 fun ConnectionsScreen(
     onBack: () -> Unit,
     onNewConnection: () -> Unit,
+    onConnect: (Long) -> Unit,
     onEditConnection: (Long) -> Unit,
     onNewIdentity: () -> Unit,
     onEditIdentity: (Long) -> Unit,
@@ -159,7 +160,7 @@ fun ConnectionsScreen(
                     0 -> ConnectionsTab(
                         sections = sections,
                         collapsedGroups = collapsedGroups,
-                        onClick = { onEditConnection(it.connection.id) },
+                        onClick = { onConnect(it.connection.id) },
                         onLongClick = { connectionMenuFor = it },
                     )
                     1 -> IdentitiesTab(
