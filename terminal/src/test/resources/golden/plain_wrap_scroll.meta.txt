@@ -1,0 +1,4 @@
+cols=20
+rows=6
+cursor_x=0
+cursor_y=5

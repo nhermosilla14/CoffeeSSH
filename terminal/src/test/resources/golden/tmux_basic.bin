@@ -1,0 +1,28 @@
+[?1049h[22;0;0t[?1h=[H[2J[?12l[?25h[?1000l[?1002l[?1003l[?1006l[?1005l[?2004h[?2031h[?996n(B[m[?12l[?25h[?1006l[?1000l[?1002l[?1003l[1;1H[1;12r[c[>c[>q]10;?\]11;?\[1;1H[?25l[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K[30m[42m
+[coffeessh0:tmux*"nicolas-desktop" 20:27 08-Jul-26(B[m[?12l[?25h[1;1H[18t[14t(B[m[?12l[?25h[?1006l[?1000l[?1002l[?1003l[1;1H[1;12r[1;1H[?25l[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K
+[K[30m[42m
+[coffeessh0:tmux*"nicolas-desktop" 20:27 08-Jul-26(B[m[?12l[?25h[1;1Hbash-5.3$ PS1='tmux$ '
+tmux$ [?25l[30m[42m[12;1H[coffeessh0:bash*"nicolas-desktop" 20:27 08-Jul-26(B[m[?12l[?25h[2;7Hecho hello from tmux
+hello from tmux
+tmux$ printf '\033[31mred\033[0m \033[32mgreen\033[0m\n'
+[31mred[39m [32mgreen
+(B[mtmux$ 

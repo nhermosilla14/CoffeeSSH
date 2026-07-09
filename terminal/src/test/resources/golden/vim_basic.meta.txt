@@ -1,0 +1,4 @@
+cols=40
+rows=10
+cursor_x=14
+cursor_y=1

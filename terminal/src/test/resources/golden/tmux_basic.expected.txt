@@ -1,0 +1,12 @@
+bash-5.3$ PS1='tmux$ '                            
+tmux$ echo hello from tmux                        
+hello from tmux                                   
+tmux$ printf '\033[31mred\033[0m \033[32mgreen\033
+[0m\n'                                            
+red green                                         
+tmux$                                             
+                                                  
+                                                  
+                                                  
+                                                  
+[coffeessh0:bash*"nicolas-desktop" 20:27 08-Jul-26

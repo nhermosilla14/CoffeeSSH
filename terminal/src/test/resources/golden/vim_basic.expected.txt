@@ -1,0 +1,10 @@
+  1 Hello CoffeeSSH                     
+  2 Second line                         
+~                                       
+~                                       
+~                                       
+~                                       
+~                                       
+~                                       
+~                                       
+:set number           2,11          All 

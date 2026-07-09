@@ -1,0 +1,4 @@
+cols=50
+rows=12
+cursor_x=6
+cursor_y=6

@@ -31,6 +31,8 @@
     <string name="connections_empty">No connections yet.\nTap + to add one.</string>
     <string name="identities_empty">No identities yet.\nTap + to add one.</string>
     <string name="manage_groups">Manage groups</string>
+    <string name="terminal_demo_menu_item">Terminal engine demo (M2)</string>
+    <string name="terminal_demo_title">Terminal demo</string>
 
     <string name="action_edit">Edit</string>
     <string name="action_duplicate">Duplicate</string>

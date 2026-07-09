@@ -181,10 +181,62 @@ i18n: all strings in `strings.xml` (`values/` EN, `values-es/` ES) from day one.
     opened Telegram. Going forward, physical-device interaction is user-driven; only read-only
     `adb screencap` is used from the agent side to verify results.
 
-### M2 — Terminal engine
+### M2 — Terminal engine — DONE (2026-07-09)
 - `:terminal` engine per section 6, with unit-test suite
 - `TerminalView` rendering + local echo/pipe test harness (fake session) to exercise UI without SSH
 - **Done when**: engine passes test suite incl. vim/tmux golden captures; test harness renders and scrolls correctly.
+- Build notes from execution:
+  - Engine implemented as: `Cell`/`CellAttrs`/`TermColor` (grid + SGR state) → `Screen` (main/alt
+    grid with scroll-region-aware ops) → `Scrollback` (ring buffer) → `EscapeSequenceParser`
+    (DEC ANSI-compatible state machine: Ground/Escape/CSI/OSC/DCS, operating on codepoints
+    from a streaming `Utf8Decoder` so multi-byte sequences split across network reads survive)
+    → `Terminal` (façade implementing `ParserSink`, owns cursor/modes/charsets, dispatches
+    CSI/ESC/OSC into actual VT100 semantics). `AnsiColors` maps `TermColor` to ARGB Int,
+    kept dependency-free in `:terminal` so it's unit-testable on the plain JVM.
+  - **70 total unit tests** in `:terminal` (up from the M0 placeholder): printing/wrapping,
+    cursor movement + origin mode, erase functions, scroll regions + reverse-index +
+    scrollback capture rules, SGR (16/256/truecolor + individual attribute on/off), modes
+    (alt screen, bracketed paste, app cursor keys, insert mode, cursor visibility), DEC
+    Special Graphics charset (SO/SI), UTF-8 streaming decode (split sequences, invalid
+    bytes), ANSI color palette, key encoding.
+  - **Golden tests** (`GoldenReplayTest`): raw pty byte captures from real `vim`, `tmux`,
+    and `bash` (via a small Python harness, `terminal/golden-fixtures/`) replayed through
+    `Terminal` and compared row-by-row against an independent oracle (`pyte`, a separate
+    Python VT100 emulator) — not hand-written expectations. Found that plain `pyte.Screen`
+    has no alternate-screen-buffer concept at all (confirmed by reading its source), so the
+    vim fixture captures mid-session rather than after `:q!`; the exit-transition behavior
+    is instead covered by a dedicated hand-written test.
+  - `TerminalView` (Android custom `View`, in `:app`): per-row run-batched Canvas rendering
+    (background rect + text per contiguous same-attribute span), bold-as-bright color +
+    fake-bold stroke, block cursor, soft-keyboard input via a minimal `BaseInputConnection`,
+    hardware key handling via `KeyEncoder`. Bundled fonts: JetBrains Mono (default), Fira
+    Mono, Hack (OFL-licensed, `licenses/fonts/`).
+  - `DemoShell` + `TerminalDemoScreen`: a tiny local pseudo-shell (reachable from
+    Connections' overflow menu, "M2" dev-only entry) exercising the whole pipeline without
+    SSH — `help`/`colors`/`boxes`/`wide`/`wrap`/`altscreen`/`echo`/`clear`, plus a minimal
+    extra-keys bar (ESC/TAB/sticky-CTRL/arrows/HOME/END/PGUP/PGDN).
+  - **Real bugs found and fixed during physical-device verification** (exactly what this
+    kind of testing is for):
+    1. Banner text got written at a hardcoded 80-col placeholder size before the view's
+       real (narrower) size was known, then a later `resize()` truncated it instead of
+       reflowing (engine behaves correctly per spec - "no reflow on resize" - the bug was
+       in the demo's sequencing). Fixed by deferring `DemoShell.start()` until
+       `TerminalView.onReady` fires after the first real layout.
+    2. The extra-keys bar became completely inaccessible behind the soft keyboard
+       (edge-to-edge + Compose needs explicit IME inset handling). Fixed with
+       `Modifier.imePadding()`.
+    3. (Demo-only, not the engine) `printBoxes()` left the DEC Special Graphics charset
+       invoked while printing a human-readable label, garbling it — confirmed the
+       charset-switching feature itself was working exactly as specified, the demo just
+       mis-sequenced SO/SI.
+  - Verified end-to-end on the physical device (Motorola Edge 30 Neo, Android 14):
+    16-color + 256-color SGR rendering, Unicode and DEC-charset box-drawing side by side,
+    CJK wide characters, alt-screen switch with content preserved underneath, soft-keyboard
+    typing + backspace line editing, hardware Enter/Backspace, sticky-CTRL extra-key
+    (Ctrl+L clear), and device rotation (resize reflows cleanly, no crash).
+  - Known, deliberate engine limitations (documented in `Terminal`'s class doc too):
+    combining marks dropped rather than merged; no scrollback reflow on resize; DCS/SOS/
+    PM/APC payloads discarded; no mouse reporting; no left/right margins (DECSLRM).
 
 ### M3 — SSH integration
 - sshj wiring, auth chain, TOFU host keys, foreground service, resize, reconnect UX
