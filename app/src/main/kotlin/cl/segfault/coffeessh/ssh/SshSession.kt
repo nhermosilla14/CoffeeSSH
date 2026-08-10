@@ -54,14 +54,21 @@ class SshSession(
         terminal.onResponse = { bytes -> sendInput(bytes) }
     }
 
-    fun start(host: String, port: Int, username: String, password: String?, privateKeyPem: String?) {
+    fun start(
+        host: String,
+        port: Int,
+        username: String,
+        password: String?,
+        privateKeyPem: String?,
+        keepaliveSeconds: Int = 15,
+    ) {
         val current = _state.value
         if (current is SshSessionState.Connecting || current is SshSessionState.Authenticating ||
             current is SshSessionState.Connected
         ) {
             return
         }
-        scope.launch { connectBlocking(host, port, username, password, privateKeyPem) }
+        scope.launch { connectBlocking(host, port, username, password, privateKeyPem, keepaliveSeconds) }
     }
 
     private suspend fun connectBlocking(
@@ -70,12 +77,13 @@ class SshSession(
         username: String,
         password: String?,
         privateKeyPem: String?,
+        keepaliveSeconds: Int,
     ) {
         _state.value = SshSessionState.Connecting
         var localClient: SSHClient? = null
         try {
             val verifier = TofuHostKeyVerifier(knownHostDao)
-            val c = SSHClient()
+            val c = SSHClient(coffeeSshConfig())
             c.addHostKeyVerifier(verifier)
             c.connectTimeout = 10_000
             c.timeout = 15_000
@@ -106,7 +114,9 @@ class SshSession(
                 else -> {} // already trusted (or, unexpectedly, null - connect() succeeded either way)
             }
 
-            c.connection.keepAlive.keepAliveInterval = 15
+            if (keepaliveSeconds > 0) {
+                c.connection.keepAlive.keepAliveInterval = keepaliveSeconds
+            }
 
             _state.value = SshSessionState.Authenticating
             authenticate(c, username, password, privateKeyPem)
@@ -148,7 +158,7 @@ class SshSession(
     private fun authenticate(client: SSHClient, username: String, password: String?, privateKeyPem: String?) {
         val methods = mutableListOf<AuthMethod>()
         if (!privateKeyPem.isNullOrBlank()) {
-            val keyProvider = client.loadKeys(privateKeyPem, null, null)
+            val keyProvider = loadCoffeeSshKeys(client, privateKeyPem)
             methods += AuthPublickey(keyProvider)
         }
         if (!password.isNullOrBlank()) {

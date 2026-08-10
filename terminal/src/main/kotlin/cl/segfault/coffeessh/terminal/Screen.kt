@@ -43,7 +43,7 @@ internal class Screen(rows: Int, cols: Int) {
     fun scrollUp(top: Int, bottom: Int, n: Int, attrs: CellAttrs, onDiscarded: ((Array<Cell>) -> Unit)? = null) {
         val count = n.coerceAtMost(bottom - top + 1)
         repeat(count) {
-            onDiscarded?.invoke(lines[top])
+            onDiscarded?.invoke(lines[top].copyOf())
             for (r in top until bottom) lines[r] = lines[r + 1]
             lines[bottom] = blankRow(cols, attrs)
         }

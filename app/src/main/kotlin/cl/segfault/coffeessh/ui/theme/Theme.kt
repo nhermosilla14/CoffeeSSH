@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import cl.segfault.coffeessh.data.AppColorScheme
 
 private val LightColors = lightColorScheme(
     primary = LightPrimary,
@@ -85,10 +86,19 @@ private val DarkColors = darkColorScheme(
 @Composable
 fun CoffeeSshTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    appColorScheme: AppColorScheme = AppColorScheme.COFFEE,
     content: @Composable () -> Unit,
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
+        colorScheme = appColorScheme.materialColors(darkTheme),
         content = content,
     )
+}
+
+private fun AppColorScheme.materialColors(darkTheme: Boolean) = when (this) {
+    AppColorScheme.COFFEE -> if (darkTheme) DarkColors else LightColors
+    AppColorScheme.OCEAN -> if (darkTheme) OceanDarkColors else OceanLightColors
+    AppColorScheme.FOREST -> if (darkTheme) ForestDarkColors else ForestLightColors
+    AppColorScheme.AMBER -> if (darkTheme) AmberDarkColors else AmberLightColors
+    AppColorScheme.VIOLET -> if (darkTheme) VioletDarkColors else VioletLightColors
 }

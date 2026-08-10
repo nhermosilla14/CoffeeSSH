@@ -94,6 +94,11 @@ class SshForegroundService : LifecycleService() {
             1 -> getString(R.string.ssh_notification_one_session)
             else -> getString(R.string.ssh_notification_n_sessions, activeCount)
         }
+        val activeNames = registry.activeSessions.value
+            .filter { it.session.state.value == SshSessionState.Connected }
+            .mapNotNull { it.name }
+            .take(2)
+            .joinToString(", ")
         val openAppIntent = PendingIntent.getActivity(
             this,
             0,
@@ -108,8 +113,8 @@ class SshForegroundService : LifecycleService() {
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(contentText)
-            .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .setContentText(if (activeNames.isBlank()) contentText else "$contentText: $activeNames")
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openAppIntent)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

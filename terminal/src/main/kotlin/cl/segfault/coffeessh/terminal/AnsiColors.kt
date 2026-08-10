@@ -18,10 +18,10 @@ object AnsiColors {
     private val CUBE_STEPS = intArrayOf(0, 95, 135, 175, 215, 255)
 
     /** One of the 256 palette entries. */
-    fun indexed(index: Int): Int {
+    fun indexed(index: Int, palette: IntArray = BASE16): Int {
         val i = index.coerceIn(0, 255)
         return when {
-            i < 16 -> BASE16[i]
+            i < 16 -> palette.getOrElse(i) { BASE16[i] }
             i < 232 -> {
                 val n = i - 16
                 argb(CUBE_STEPS[n / 36], CUBE_STEPS[(n / 6) % 6], CUBE_STEPS[n % 6])
@@ -34,9 +34,9 @@ object AnsiColors {
     }
 
     /** Resolves a [TermColor], substituting [default] for [TermColor.Default]. */
-    fun resolve(color: TermColor, default: Int): Int = when (color) {
+    fun resolve(color: TermColor, default: Int, palette: IntArray = BASE16): Int = when (color) {
         is TermColor.Default -> default
-        is TermColor.Indexed -> indexed(color.index)
+        is TermColor.Indexed -> indexed(color.index, palette)
         is TermColor.Rgb -> argb(color.r, color.g, color.b)
     }
 

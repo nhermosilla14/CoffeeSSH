@@ -10,6 +10,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import cl.segfault.coffeessh.CoffeeSshApp
 import cl.segfault.coffeessh.data.repo.IdentitiesRepository
 import cl.segfault.coffeessh.data.repo.IdentityDraft
+import cl.segfault.coffeessh.ssh.GeneratedKey
+import cl.segfault.coffeessh.ssh.KeyTypeOption
+import cl.segfault.coffeessh.ssh.generateKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +25,10 @@ data class IdentityEditorState(
     val username: String = "",
     val password: String = "",
     val privateKey: String = "",
+    val publicKey: String? = null,
+    val keyType: String? = null,
     val saved: Boolean = false,
+    val showKeyGenDialog: Boolean = false,
 ) {
     val canSave: Boolean get() = nickname.isNotBlank() && username.isNotBlank()
 }
@@ -46,6 +52,8 @@ class IdentityEditorViewModel(
                             username = draft.username,
                             password = draft.password,
                             privateKey = draft.privateKey,
+                            publicKey = draft.publicKey,
+                            keyType = draft.keyType,
                         )
                     }
                 }
@@ -58,6 +66,29 @@ class IdentityEditorViewModel(
     fun onPasswordChange(value: String) = _state.update { it.copy(password = value) }
     fun onPrivateKeyChange(value: String) = _state.update { it.copy(privateKey = value) }
 
+    fun showKeyGenDialog() = _state.update { it.copy(showKeyGenDialog = true) }
+    fun hideKeyGenDialog() = _state.update { it.copy(showKeyGenDialog = false) }
+
+    fun generateKey(type: KeyTypeOption) {
+        viewModelScope.launch {
+            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                cl.segfault.coffeessh.ssh.generateKey(type)
+            }
+            _state.update {
+                it.copy(
+                    privateKey = result.privateKeyPem,
+                    publicKey = result.publicKey,
+                    keyType = result.keyType.keyTypeDb,
+                    showKeyGenDialog = false,
+                )
+            }
+        }
+    }
+
+    fun clearPublicKey() {
+        _state.update { it.copy(publicKey = null, keyType = null) }
+    }
+
     fun save() {
         val s = _state.value
         if (!s.canSave) return
@@ -69,6 +100,8 @@ class IdentityEditorViewModel(
                     username = s.username,
                     password = s.password,
                     privateKey = s.privateKey,
+                    publicKey = s.publicKey,
+                    keyType = s.keyType,
                 ),
             )
             _state.update { it.copy(saved = true) }

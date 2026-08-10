@@ -83,6 +83,7 @@ class Terminal(rows: Int, cols: Int, scrollbackLines: Int = 5000) : ParserSink {
     val altScreenActive: Boolean get() = modes.altScreenActive
 
     fun scrollbackLine(indexFromTop: Int): Array<Cell> = scrollback.lineFromTop(indexFromTop)
+    fun scrollbackSnapshot(): List<Array<Cell>> = scrollback.snapshot()
     val scrollbackSize: Int get() = if (modes.altScreenActive) 0 else scrollback.size
 
     fun resize(newRows: Int, newCols: Int) {

@@ -302,7 +302,7 @@ private fun IdentitiesTab(
             ListRow(
                 icon = Icons.Filled.Person,
                 title = identity.nickname,
-                subtitle = identity.username,
+                subtitle = identity.keyType?.let { "${identity.username}  •  $it" } ?: identity.username,
                 onClick = { onClick(identity) },
                 onLongClick = { onLongClick(identity) },
             )

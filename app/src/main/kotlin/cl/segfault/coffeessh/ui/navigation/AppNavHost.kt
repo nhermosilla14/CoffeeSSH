@@ -1,6 +1,7 @@
 package cl.segfault.coffeessh.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -12,10 +13,14 @@ import cl.segfault.coffeessh.ui.common.PlaceholderScreen
 import cl.segfault.coffeessh.ui.connections.ConnectionEditorScreen
 import cl.segfault.coffeessh.ui.connections.ConnectionsScreen
 import cl.segfault.coffeessh.ui.dashboard.DashboardScreen
+import cl.segfault.coffeessh.ui.about.AboutScreen
+import cl.segfault.coffeessh.ui.about.OpenSourceLicensesScreen
 import cl.segfault.coffeessh.ui.groups.GroupsScreen
 import cl.segfault.coffeessh.ui.identities.IdentityEditorScreen
+import cl.segfault.coffeessh.ui.settings.SettingsScreen
 import cl.segfault.coffeessh.ui.terminal.TerminalDemoScreen
 import cl.segfault.coffeessh.ui.terminal.TerminalSessionScreen
+import cl.segfault.coffeessh.CoffeeSshApp
 
 object Routes {
     const val DASHBOARD = "dashboard"
@@ -27,15 +32,18 @@ object Routes {
     const val IDENTITY_NEW = "identity/new"
     const val IDENTITY_EDIT = "identity/{identityId}"
     const val TERMINAL_DEMO = "terminal/demo"
-    const val TERMINAL_SESSION = "terminal/session/{connectionId}"
+    const val TERMINAL_SESSION = "terminal/session/{connectionId}/{sessionId}"
+    const val ABOUT = "about"
+    const val OPEN_SOURCE_LICENSES = "about/licenses"
 
     fun connectionEdit(id: Long) = "connection/$id"
     fun identityEdit(id: Long) = "identity/$id"
-    fun terminalSession(id: Long) = "terminal/session/$id"
+    fun terminalSession(id: Long, sessionId: String) = "terminal/session/$id/$sessionId"
 }
 
 @Composable
 fun AppNavHost(navController: NavHostController = rememberNavController()) {
+    val app = LocalContext.current.applicationContext as CoffeeSshApp
     NavHost(
         navController = navController,
         startDestination = Routes.DASHBOARD,
@@ -44,14 +52,24 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
             DashboardScreen(
                 onOpenConnections = { navController.navigate(Routes.CONNECTIONS) },
                 onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                onOpenConnection = { navController.navigate(Routes.terminalSession(it)) },
+                onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                onOpenConnection = {
+                    val session = app.container.sshSessionRegistry.create(it)
+                    navController.navigate(Routes.terminalSession(it, session.sessionId))
+                },
+                onOpenActiveSession = { connectionId, sessionId ->
+                    navController.navigate(Routes.terminalSession(connectionId, sessionId))
+                },
             )
         }
         composable(Routes.CONNECTIONS) {
             ConnectionsScreen(
                 onBack = { navController.popBackStack() },
                 onNewConnection = { navController.navigate(Routes.CONNECTION_NEW) },
-                onConnect = { navController.navigate(Routes.terminalSession(it)) },
+                onConnect = {
+                    val session = app.container.sshSessionRegistry.create(it)
+                    navController.navigate(Routes.terminalSession(it, session.sessionId))
+                },
                 onEditConnection = { navController.navigate(Routes.connectionEdit(it)) },
                 onNewIdentity = { navController.navigate(Routes.IDENTITY_NEW) },
                 onEditIdentity = { navController.navigate(Routes.identityEdit(it)) },
@@ -85,19 +103,30 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(
             route = Routes.TERMINAL_SESSION,
-            arguments = listOf(navArgument("connectionId") { type = NavType.LongType }),
+            arguments = listOf(
+                navArgument("connectionId") { type = NavType.LongType },
+                navArgument("sessionId") { type = NavType.StringType },
+            ),
         ) { backStackEntry ->
             val connectionId = backStackEntry.arguments?.getLong("connectionId") ?: return@composable
+            val sessionId = backStackEntry.arguments?.getString("sessionId") ?: return@composable
             TerminalSessionScreen(
                 connectionId = connectionId,
+                sessionId = sessionId,
                 onBack = { navController.popBackStack() },
             )
         }
         composable(Routes.SETTINGS) {
-            PlaceholderScreen(
-                titleRes = R.string.dashboard_settings_title,
+            SettingsScreen(onBack = { navController.popBackStack() })
+        }
+        composable(Routes.ABOUT) {
+            AboutScreen(
                 onBack = { navController.popBackStack() },
+                onOpenLicenses = { navController.navigate(Routes.OPEN_SOURCE_LICENSES) },
             )
+        }
+        composable(Routes.OPEN_SOURCE_LICENSES) {
+            OpenSourceLicensesScreen(onBack = { navController.popBackStack() })
         }
     }
 }

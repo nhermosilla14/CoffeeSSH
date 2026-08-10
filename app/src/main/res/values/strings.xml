@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name" translatable="false">CoffeeSSH</string>
-
     <string name="back">Back</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
@@ -22,7 +21,8 @@
     <string name="dashboard_help_subtitle">About this app</string>
 
     <string name="about_title">About CoffeeSSH</string>
-    <string name="about_text">CoffeeSSH 0.1.0 (M1)\n\nAn SSH client for Android, with a warm coffee flavour.</string>
+    <string name="open_source_licenses">Open source licenses</string>
+    <string name="about_text">CoffeeSSH %1$s\n\nAn SSH client for Android, with a hint of coffee.</string>
 
     <string name="connections_tab">Connections</string>
     <string name="identities_tab">Identities</string>
@@ -39,9 +39,9 @@
     <string name="action_delete">Delete</string>
 
     <string name="delete_connection_title">Delete connection?</string>
-    <string name="delete_connection_text">“%1$s” will be removed.</string>
+    <string name="delete_connection_text">\"%1$s\" will be removed.</string>
     <string name="delete_identity_title">Delete identity?</string>
-    <string name="delete_identity_text">“%1$s” will be removed. Connections using it will be kept, without an identity.</string>
+    <string name="delete_identity_text">\"%1$s\" will be removed. Connections using it will be kept, without an identity.</string>
 
     <string name="new_connection">New connection</string>
     <string name="edit_connection">Edit connection</string>
@@ -60,15 +60,66 @@
     <string name="username_label">Username</string>
     <string name="password_label">Password</string>
     <string name="private_key_label">Private key</string>
-    <string name="private_key_hint">Paste an OpenSSH/PEM private key. Generation and file import arrive in a later milestone.</string>
+    <string name="private_key_hint">Paste an OpenSSH/PEM private key, or generate one below.</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
+
+    <string name="key_pair_section_title">Key Pair</string>
+    <string name="generate_key_button">Generate key</string>
+    <string name="generate_key_dialog_title">Choose key type</string>
+    <string name="generate">Generate</string>
+    <string name="public_key_label">Public key</string>
+    <string name="copy_to_clipboard">Copy</string>
+    <string name="share">Share</string>
+
+    <string name="copy_key_to_server_title">Copy key to server</string>
+    <string name="copy_key_to_server_button">Copy to server…</string>
+    <string name="copy_key_select_connection">Select the server to copy this key to:</string>
+    <string name="copy_key_copy_button">Copy key</string>
+    <string name="copy_key_success">Public key successfully copied to server.</string>
+    <string name="copy_key_already_present">The server already has this public key.</string>
+    <string name="copy_key_working">Working…</string>
+    <string name="copy_key_host_key_rejected">Host key rejected</string>
+    <string name="copy_key_failed">Failed to copy public key:</string>
+    <string name="copy_key_no_connections">No connections yet. Create one first.</string>
+
+    <string name="settings_theme_title">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_font_title">Terminal font</string>
+    <string name="settings_font_size_title">Font size</string>
+    <string name="settings_scrollback_title">Scrollback size</string>
+    <string name="settings_keepalive_title">SSH keepalive</string>
+    <string name="settings_keepalive_off">Off</string>
+    <string name="settings_keepalive_value">Every %1$d seconds</string>
+    <string name="settings_color_scheme_title">Terminal color scheme</string>
+    <string name="settings_color_scheme_coffee">Coffee</string>
+    <string name="settings_color_scheme_solarized">Solarized</string>
+    <string name="settings_color_scheme_dracula">Dracula</string>
+    <string name="settings_color_scheme_nord">Nord</string>
+    <string name="settings_color_scheme_monokai">Monokai</string>
+    <string name="settings_app_color_scheme_title">App color scheme</string>
+    <string name="settings_app_color_scheme_coffee">Coffee</string>
+    <string name="settings_app_color_scheme_ocean">Ocean</string>
+    <string name="settings_app_color_scheme_forest">Forest</string>
+    <string name="settings_app_color_scheme_amber">Amber</string>
+    <string name="settings_app_color_scheme_violet">Violet</string>
+    <string name="dashboard_active_title">Active sessions</string>
+    <string name="dashboard_active_subtitle">Sessions kept open in the background</string>
+    <string name="close_session_title">Close session?</string>
+    <string name="close_session_text">Keep this session open in the background, or close it now?</string>
+    <string name="close_session_confirm">Close session</string>
+    <string name="close_session_keep">Keep open</string>
+    <string name="rename_session_title">Name session</string>
+    <string name="rename_session_hint">Session name</string>
+    <string name="rename_session_save">Save name</string>
 
     <string name="groups_title">Groups</string>
     <string name="groups_empty">No groups yet.\nTap + to create one.</string>
     <string name="rename_group">Rename group</string>
     <string name="delete_group_title">Delete group?</string>
-    <string name="delete_group_text">Connections in “%1$s” will not be deleted.</string>
+    <string name="delete_group_text">Connections in \"%1$s\" will not be deleted.</string>
 
     <string name="ssh_notification_channel_name">SSH sessions</string>
     <string name="ssh_notification_connecting">Connecting…</string>
@@ -92,9 +143,14 @@
     <string name="host_key_reject">Reject</string>
 
     <string name="terminal_action_copy_screen">Copy screen text</string>
+    <string name="terminal_action_title">Terminal</string>
+    <string name="terminal_action_copy_session">Copy whole session</string>
+    <string name="terminal_action_save_transcript">Save transcript</string>
+    <string name="terminal_action_share_transcript">Share transcript</string>
     <string name="terminal_action_paste">Paste</string>
     <string name="terminal_action_keep_screen_on">Keep screen on</string>
     <string name="terminal_action_clear">Clear</string>
     <string name="terminal_action_disconnect">Disconnect</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
+    <string name="terminal_selection_instruction">Drag across the terminal to select text</string>
 </resources>

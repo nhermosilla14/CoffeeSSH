@@ -27,11 +27,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import cl.segfault.coffeessh.R
+import cl.segfault.coffeessh.CoffeeSshApp
 import cl.segfault.coffeessh.terminal.KeyEncoder
 import cl.segfault.coffeessh.terminal.Terminal
 import cl.segfault.coffeessh.terminal.TerminalKey
@@ -41,7 +44,12 @@ import cl.segfault.coffeessh.terminal.TerminalKey
 fun TerminalDemoScreen(onBack: () -> Unit) {
     val terminal = remember { Terminal(rows = 24, cols = 80) }
     val shell = remember(terminal) { DemoShell(terminal) }
+    val context = LocalContext.current
+    val app = context.applicationContext as CoffeeSshApp
+    val settings by app.container.settingsManager.settings.collectAsState()
+    val colorScheme = cl.segfault.coffeessh.terminal.TerminalColorScheme.fromId(settings.terminalColorScheme)
     var ctrlSticky by rememberSaveable { mutableStateOf(false) }
+    var extraKeysVisible by rememberSaveable { mutableStateOf(true) }
 
     fun sendInput(bytes: ByteArray) {
         val asCtrlable = bytes.size == 1 && bytes[0].toInt().toChar().let { it in 'a'..'z' || it in 'A'..'Z' }
@@ -83,19 +91,24 @@ fun TerminalDemoScreen(onBack: () -> Unit) {
                 factory = { ctx ->
                     TerminalView(ctx).apply {
                         this.terminal = terminal
+                        this.colorScheme = colorScheme
                         setFont(TerminalFont.JETBRAINS_MONO.fontRes)
                         onInput = ::sendInput
+                        onTap = { extraKeysVisible = !extraKeysVisible }
                         onReady = { shell.start() }
                     }
                 },
+                update = { view -> view.colorScheme = colorScheme },
             )
-            ExtraKeysBar(
-                ctrlActive = ctrlSticky,
-                onCtrlToggle = { ctrlSticky = !ctrlSticky },
-                onKey = { key -> shell.onInput(KeyEncoder.encode(key, terminal)) },
-                onEsc = { shell.onInput(byteArrayOf(0x1B)) },
-                onTab = { shell.onInput(byteArrayOf(0x09)) },
-            )
+            if (extraKeysVisible) {
+                ExtraKeysBar(
+                    ctrlActive = ctrlSticky,
+                    onCtrlToggle = { ctrlSticky = !ctrlSticky },
+                    onKey = { key -> shell.onInput(KeyEncoder.encode(key, terminal)) },
+                    onEsc = { shell.onInput(byteArrayOf(0x1B)) },
+                    onTab = { shell.onInput(byteArrayOf(0x09)) },
+                )
+            }
         }
     }
 }

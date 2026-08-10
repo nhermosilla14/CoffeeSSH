@@ -13,8 +13,8 @@ android {
         applicationId = "cl.segfault.coffeessh"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "0.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -22,6 +22,8 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // Keep local release artifacts installable until a production keystore is supplied.
+            signingConfig = signingConfigs.getByName("debug")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -69,6 +71,8 @@ dependencies {
     runtimeOnly(libs.slf4j.nop)
 
     debugImplementation(libs.compose.ui.tooling)
+
+    testImplementation(libs.junit)
 
     androidTestImplementation(libs.test.ext.junit)
     androidTestImplementation(libs.test.runner)

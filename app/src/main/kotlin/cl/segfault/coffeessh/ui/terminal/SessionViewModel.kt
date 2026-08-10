@@ -30,12 +30,16 @@ data class SessionUiState(
 class SessionViewModel(
     application: Application,
     private val connectionId: Long,
+    private val sessionId: String,
     private val connectionsRepo: ConnectionsRepository,
     private val identitiesRepo: IdentitiesRepository,
     private val registry: SshSessionRegistry,
+    private val settingsManager: cl.segfault.coffeessh.data.SettingsManager,
 ) : AndroidViewModel(application) {
 
-    private val session: SshSession = registry.getOrCreate(connectionId)
+    private val activeSession = registry.get(sessionId)
+        ?: error("Active SSH session not found: $sessionId")
+    private val session: SshSession = activeSession.session
     val terminal: Terminal get() = session.terminal
 
     private val _ui = MutableStateFlow(SessionUiState())
@@ -50,7 +54,8 @@ class SessionViewModel(
         }
         viewModelScope.launch {
             val withRefs = connectionsRepo.get(connectionId)
-            val title = withRefs?.connection?.nickname ?: withRefs?.connection?.host ?: ""
+            val connectionTitle = withRefs?.connection?.nickname ?: withRefs?.connection?.host ?: ""
+            val title = activeSession.name ?: connectionTitle
             _ui.value = _ui.value.copy(title = title)
 
             val identityId = withRefs?.connection?.identityId
@@ -67,6 +72,7 @@ class SessionViewModel(
                 username = draft.username,
                 password = draft.password.ifBlank { null },
                 privateKeyPem = draft.privateKey.ifBlank { null },
+                keepaliveSeconds = settingsManager.settings.value.keepaliveSeconds,
             )
         }
     }
@@ -89,6 +95,7 @@ class SessionViewModel(
                 username = draft.username,
                 password = draft.password.ifBlank { null },
                 privateKeyPem = draft.privateKey.ifBlank { null },
+                keepaliveSeconds = settingsManager.settings.value.keepaliveSeconds,
             )
         }
     }
@@ -96,17 +103,28 @@ class SessionViewModel(
     /** Disconnects but keeps the session registered (e.g. explicit user action from the menu). */
     fun disconnect() = session.disconnect()
 
+    fun closeSession() {
+        registry.remove(sessionId)
+    }
+
+    fun rename(name: String) {
+        registry.rename(sessionId, name)
+        _ui.value = _ui.value.copy(title = name.trim().ifBlank { _ui.value.title })
+    }
+
     companion object {
-        fun factory(connectionId: Long) = viewModelFactory {
+        fun factory(connectionId: Long, sessionId: String) = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as CoffeeSshApp
                 @Suppress("UNCHECKED_CAST")
                 SessionViewModel(
                     application = app,
                     connectionId = connectionId,
+                    sessionId = sessionId,
                     connectionsRepo = app.container.connectionsRepository,
                     identitiesRepo = app.container.identitiesRepository,
                     registry = app.container.sshSessionRegistry,
+                    settingsManager = app.container.settingsManager,
                 )
             }
         }

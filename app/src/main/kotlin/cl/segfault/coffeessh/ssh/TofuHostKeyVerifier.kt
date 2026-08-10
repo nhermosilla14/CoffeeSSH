@@ -6,7 +6,6 @@ import java.security.MessageDigest
 import java.security.PublicKey
 import java.util.Base64
 import kotlinx.coroutines.runBlocking
-import net.schmizz.sshj.common.Buffer
 import net.schmizz.sshj.common.KeyType
 import net.schmizz.sshj.transport.verification.HostKeyVerifier
 
@@ -42,7 +41,7 @@ class TofuHostKeyVerifier(private val knownHostDao: KnownHostDao) : HostKeyVerif
         private set
 
     override fun verify(hostname: String, port: Int, key: PublicKey): Boolean {
-        val keyType = KeyType.fromKey(key).toString()
+        val keyType = sshPublicKeyType(key)
         val fingerprint = fingerprintOf(key)
         val existing = runBlocking {
             knownHostDao.findFor(hostname, port).firstOrNull { it.keyType == keyType }
@@ -68,7 +67,7 @@ class TofuHostKeyVerifier(private val knownHostDao: KnownHostDao) : HostKeyVerif
     companion object {
         /** OpenSSH-style `SHA256:base64(sha256(sshWireFormatBlob))`, no padding. */
         fun fingerprintOf(key: PublicKey): String {
-            val blob = Buffer.PlainBuffer().putPublicKey(key).compactData
+            val blob = sshPublicKeyBlob(key)
             val digest = MessageDigest.getInstance("SHA-256").digest(blob)
             return "SHA256:" + Base64.getEncoder().withoutPadding().encodeToString(digest)
         }

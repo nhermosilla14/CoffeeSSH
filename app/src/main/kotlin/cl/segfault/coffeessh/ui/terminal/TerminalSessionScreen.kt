@@ -1,16 +1,19 @@
 package cl.segfault.coffeessh.ui.terminal
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckBox
@@ -18,6 +21,7 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -28,9 +32,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,8 +55,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import android.widget.Toast
 import cl.segfault.coffeessh.R
+import cl.segfault.coffeessh.CoffeeSshApp
 import cl.segfault.coffeessh.ssh.SshSessionState
 import cl.segfault.coffeessh.terminal.KeyEncoder
+import cl.segfault.coffeessh.terminal.TerminalColorScheme
 import cl.segfault.coffeessh.terminal.TerminalKey
 import cl.segfault.coffeessh.terminal.snapshotText
 
@@ -58,16 +66,38 @@ import cl.segfault.coffeessh.terminal.snapshotText
 @Composable
 fun TerminalSessionScreen(
     connectionId: Long,
+    sessionId: String,
     onBack: () -> Unit,
-    viewModel: SessionViewModel = viewModel(factory = SessionViewModel.factory(connectionId)),
+    viewModel: SessionViewModel = viewModel(factory = SessionViewModel.factory(connectionId, sessionId)),
 ) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
     val sshState by viewModel.sshState.collectAsStateWithLifecycle()
     var ctrlSticky by rememberSaveable { mutableStateOf(false) }
     var keepScreenOn by rememberSaveable { mutableStateOf(false) }
     var menuOpen by remember { mutableStateOf(false) }
+    var terminalActionsOpen by remember { mutableStateOf(false) }
+    var selectionInstructionVisible by remember { mutableStateOf(false) }
+    var terminalView by remember { mutableStateOf<TerminalView?>(null) }
+    var extraKeysVisible by rememberSaveable { mutableStateOf(true) }
+    var fnActive by rememberSaveable { mutableStateOf(false) }
+    var showCloseDialog by rememberSaveable { mutableStateOf(false) }
+    var showRenameDialog by rememberSaveable { mutableStateOf(false) }
+    var sessionName by rememberSaveable { mutableStateOf("") }
     val clipboard = LocalClipboardManager.current
     val context = LocalContext.current
+    val app = context.applicationContext as CoffeeSshApp
+    val appSettings by app.container.settingsManager.settings.collectAsStateWithLifecycle()
+    val terminalFont = TerminalFont.entries.firstOrNull {
+        it.name.lowercase() == appSettings.terminalFont
+    } ?: TerminalFont.JETBRAINS_MONO
+    val terminalColorScheme = TerminalColorScheme.fromId(appSettings.terminalColorScheme)
+
+    LaunchedEffect(sshState) {
+        if (sshState is SshSessionState.Disconnected) {
+            viewModel.closeSession()
+            onBack()
+        }
+    }
 
     fun sendInput(bytes: ByteArray) {
         val isLetter = bytes.size == 1 && bytes[0].toInt().toChar().let { it in 'a'..'z' || it in 'A'..'Z' }
@@ -83,7 +113,9 @@ fun TerminalSessionScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
+                    Column(
+                        modifier = Modifier.clickable { sessionName = ui.title; showRenameDialog = true },
+                    ) {
                         Text(ui.title)
                         Text(
                             text = statusLabel(sshState),
@@ -92,7 +124,7 @@ fun TerminalSessionScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = { showCloseDialog = true }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back))
                     }
                 },
@@ -105,7 +137,8 @@ fun TerminalSessionScreen(
                             text = { Text(stringResource(R.string.terminal_action_copy_screen)) },
                             onClick = {
                                 menuOpen = false
-                                copyScreenText(viewModel, clipboard, context)
+                                selectionInstructionVisible = true
+                                terminalView?.beginSelection()
                             },
                         )
                         DropdownMenuItem(
@@ -165,23 +198,139 @@ fun TerminalSessionScreen(
                     factory = { ctx ->
                         TerminalView(ctx).apply {
                             this.terminal = viewModel.terminal
-                            setFont(TerminalFont.JETBRAINS_MONO.fontRes)
+                            colorScheme = terminalColorScheme
+                            setFont(terminalFont.fontRes)
+                            textSizeSp = appSettings.terminalFontSize.toFloat()
                             onInput = ::sendInput
                             onResize = { rows, cols -> viewModel.resize(rows, cols) }
-                        }
+                            onReady = { showKeyboard() }
+                            onTap = { extraKeysVisible = !extraKeysVisible }
+                            onLongPress = { terminalActionsOpen = true }
+                            onSelectionComplete = { text ->
+                                clipboard.setText(AnnotatedString(text))
+                                selectionInstructionVisible = false
+                                Toast.makeText(context, context.getString(R.string.copied_to_clipboard), Toast.LENGTH_SHORT).show()
+                            }
+                        }.also { terminalView = it }
                     },
-                    update = { view -> view.keepScreenOn = keepScreenOn },
+                    update = { view ->
+                        view.keepScreenOn = keepScreenOn
+                        view.colorScheme = terminalColorScheme
+                        view.setFont(terminalFont.fontRes)
+                        view.textSizeSp = appSettings.terminalFontSize.toFloat()
+                    },
                 )
                 StatusOverlay(ui = ui, sshState = sshState, onRetry = viewModel::retry)
             }
-            ExtraKeysBar(
-                ctrlActive = ctrlSticky,
-                onCtrlToggle = { ctrlSticky = !ctrlSticky },
-                onKey = { key -> viewModel.sendInput(KeyEncoder.encode(key, viewModel.terminal)) },
-                onEsc = { viewModel.sendInput(byteArrayOf(0x1B)) },
-                onTab = { viewModel.sendInput(byteArrayOf(0x09)) },
-            )
+            if (selectionInstructionVisible) {
+                Text(
+                    text = stringResource(R.string.terminal_selection_instruction),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.error)
+                        .padding(vertical = 10.dp, horizontal = 16.dp),
+                    color = MaterialTheme.colorScheme.onError,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
+            if (extraKeysVisible) {
+                ExtraKeysBar(
+                    ctrlActive = ctrlSticky,
+                    onCtrlToggle = { ctrlSticky = !ctrlSticky },
+                    onKey = { key -> viewModel.sendInput(KeyEncoder.encode(key, viewModel.terminal)) },
+                    onEsc = { viewModel.sendInput(byteArrayOf(0x1B)) },
+                    onTab = { viewModel.sendInput(byteArrayOf(0x09)) },
+                    fnActive = fnActive,
+                    onFnToggle = { fnActive = !fnActive },
+                )
+            }
         }
+    }
+
+    if (showCloseDialog) {
+        AlertDialog(
+            onDismissRequest = { showCloseDialog = false },
+            title = { Text(stringResource(R.string.close_session_title)) },
+            text = { Text(stringResource(R.string.close_session_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showCloseDialog = false
+                    viewModel.closeSession()
+                    onBack()
+                }) { Text(stringResource(R.string.close_session_confirm)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showCloseDialog = false
+                    onBack()
+                }) { Text(stringResource(R.string.close_session_keep)) }
+            },
+        )
+    }
+
+    if (terminalActionsOpen) {
+        AlertDialog(
+            onDismissRequest = { terminalActionsOpen = false },
+            title = { Text(stringResource(R.string.terminal_action_title)) },
+            text = {
+                Column {
+                    TerminalAction(stringResource(R.string.terminal_action_copy_screen)) {
+                        terminalActionsOpen = false
+                        selectionInstructionVisible = true
+                        terminalView?.beginSelection()
+                    }
+                    TerminalAction(stringResource(R.string.terminal_action_copy_session)) {
+                        terminalActionsOpen = false
+                        clipboard.setText(AnnotatedString(viewModel.terminal.scrollbackSnapshot().joinToString("\n") { row ->
+                            row.filter { it.width != 0 }.joinToString("") { cell ->
+                                if (cell.codePoint == 0) " " else String(Character.toChars(cell.codePoint))
+                            }.trimEnd()
+                        }))
+                    }
+                    TerminalAction(stringResource(R.string.terminal_action_paste)) {
+                        terminalActionsOpen = false
+                        pasteFromClipboard(viewModel, clipboard)
+                    }
+                    TerminalAction(stringResource(R.string.terminal_action_save_transcript)) { terminalActionsOpen = false }
+                    TerminalAction(stringResource(R.string.terminal_action_share_transcript)) { terminalActionsOpen = false }
+                    TerminalAction(stringResource(R.string.terminal_action_keep_screen_on)) {
+                        keepScreenOn = !keepScreenOn
+                        terminalActionsOpen = false
+                    }
+                    TerminalAction(stringResource(R.string.terminal_action_clear)) {
+                        terminalActionsOpen = false
+                        viewModel.sendInput("\u001b[2J\u001b[H".encodeToByteArray())
+                    }
+                }
+            },
+            confirmButton = {},
+        )
+    }
+
+    if (showRenameDialog) {
+        AlertDialog(
+            onDismissRequest = { showRenameDialog = false },
+            title = { Text(stringResource(R.string.rename_session_title)) },
+            text = {
+                OutlinedTextField(
+                    value = sessionName,
+                    onValueChange = { sessionName = it },
+                    label = { Text(stringResource(R.string.rename_session_hint)) },
+                    singleLine = true,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.rename(sessionName)
+                    showRenameDialog = false
+                }) { Text(stringResource(R.string.rename_session_save)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRenameDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 
     val awaiting = sshState as? SshSessionState.AwaitingHostKeyConfirmation
@@ -299,36 +448,71 @@ private fun ExtraKeysBar(
     onKey: (TerminalKey) -> Unit,
     onEsc: () -> Unit,
     onTab: () -> Unit,
+    fnActive: Boolean,
+    onFnToggle: () -> Unit,
 ) {
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .horizontalScroll(rememberScrollState())
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(0.dp),
     ) {
-        ExtraKey("ESC", onClick = onEsc)
-        ExtraKey("TAB", onClick = onTab)
-        ExtraKey("CTRL", highlighted = ctrlActive, onClick = onCtrlToggle)
-        ExtraKey("\u2190", onClick = { onKey(TerminalKey.ARROW_LEFT) })
-        ExtraKey("\u2191", onClick = { onKey(TerminalKey.ARROW_UP) })
-        ExtraKey("\u2193", onClick = { onKey(TerminalKey.ARROW_DOWN) })
-        ExtraKey("\u2192", onClick = { onKey(TerminalKey.ARROW_RIGHT) })
-        ExtraKey("HOME", onClick = { onKey(TerminalKey.HOME) })
-        ExtraKey("END", onClick = { onKey(TerminalKey.END) })
-        ExtraKey("PGUP", onClick = { onKey(TerminalKey.PAGE_UP) })
-        ExtraKey("PGDN", onClick = { onKey(TerminalKey.PAGE_DOWN) })
+        if (fnActive) {
+            ExtraKeyRow {
+                listOf(TerminalKey.F1, TerminalKey.F2, TerminalKey.F3, TerminalKey.F4, TerminalKey.F5, TerminalKey.F6).forEachIndexed { index, key ->
+                    ExtraKey("F${index + 1}") { onKey(key) }
+                }
+                ExtraKey("↶") { onFnToggle() }
+            }
+            ExtraKeyRow {
+                listOf(TerminalKey.F7, TerminalKey.F8, TerminalKey.F9, TerminalKey.F10, TerminalKey.F11, TerminalKey.F12).forEachIndexed { index, key ->
+                    ExtraKey("F${index + 7}") { onKey(key) }
+                }
+                ExtraKey("⌨") {}
+            }
+        } else {
+            ExtraKeyRow {
+                ExtraKey("ESC", onClick = onEsc); ExtraKey("/") {}; ExtraKey("|") {}; ExtraKey("-") {}
+                ExtraKey("HOME") { onKey(TerminalKey.HOME) }; ExtraKey("↑") { onKey(TerminalKey.ARROW_UP) }
+                ExtraKey("END") { onKey(TerminalKey.END) }; ExtraKey("PGUP") { onKey(TerminalKey.PAGE_UP) }; ExtraKey("FN", onClick = onFnToggle)
+            }
+            ExtraKeyRow {
+                ExtraKey("TAB", onClick = onTab); ExtraKey("CTRL", highlighted = ctrlActive, onClick = onCtrlToggle); ExtraKey("ALT") {}
+                ExtraKey("←") { onKey(TerminalKey.ARROW_LEFT) }; ExtraKey("↓") { onKey(TerminalKey.ARROW_DOWN) }
+                ExtraKey("→") { onKey(TerminalKey.ARROW_RIGHT) }; ExtraKey("PGDN") { onKey(TerminalKey.PAGE_DOWN) }; ExtraKey("⌨") {}
+            }
+        }
     }
 }
 
 @Composable
-private fun ExtraKey(label: String, highlighted: Boolean = false, onClick: () -> Unit) {
-    TextButton(onClick = onClick) {
+private fun ExtraKeyRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(40.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun RowScope.ExtraKey(label: String, highlighted: Boolean = false, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.weight(1f).fillMaxHeight(),
+        contentPadding = PaddingValues(0.dp),
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        ),
+    ) {
         Text(
             text = label,
-            color = if (highlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
         )
+    }
+}
+
+@Composable
+private fun TerminalAction(label: String, onClick: () -> Unit) {
+    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Text(label, modifier = Modifier.fillMaxWidth())
     }
 }
 

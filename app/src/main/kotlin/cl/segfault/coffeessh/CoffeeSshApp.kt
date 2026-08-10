@@ -2,6 +2,7 @@ package cl.segfault.coffeessh
 
 import android.app.Application
 import android.content.Context
+import cl.segfault.coffeessh.data.SettingsManager
 import cl.segfault.coffeessh.data.crypto.KeystoreCrypto
 import cl.segfault.coffeessh.data.db.CoffeeDatabase
 import cl.segfault.coffeessh.data.repo.ConnectionsRepository
@@ -16,6 +17,7 @@ class AppContainer(context: Context) {
     private val database = CoffeeDatabase.build(context)
 
     val crypto = KeystoreCrypto()
+    val settingsManager = SettingsManager(context)
     val connectionsRepository = ConnectionsRepository(database.connectionDao(), database.connectionLogDao())
     val identitiesRepository = IdentitiesRepository(database.identityDao(), crypto)
     val groupsRepository = GroupsRepository(database.groupDao())
@@ -40,7 +42,9 @@ class CoffeeSshApp : Application() {
      * dependency, taking priority over whatever the platform registered.
      */
     private fun registerBouncyCastle() {
+        // Keep Android's provider precedence for X25519 and use BC explicitly for
+        // Ed25519 key parsing/generation where required by SSHJ.
         Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME)
-        Security.insertProviderAt(BouncyCastleProvider(), 1)
+        Security.addProvider(BouncyCastleProvider())
     }
 }

@@ -8,7 +8,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import cl.segfault.coffeessh.data.ThemeMode
+import cl.segfault.coffeessh.data.AppColorScheme
 import cl.segfault.coffeessh.ui.navigation.AppNavHost
 import cl.segfault.coffeessh.ui.theme.CoffeeSshTheme
 
@@ -22,8 +27,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         requestNotificationPermissionIfNeeded()
+        val settingsManager = (application as CoffeeSshApp).container.settingsManager
         setContent {
-            CoffeeSshTheme {
+            val settings by settingsManager.settings.collectAsStateWithLifecycle()
+            val darkTheme = when (settings.themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+            // The theme reads the same StateFlow-backed preference as Settings, so
+            // changing the app palette updates the whole Compose tree immediately.
+            CoffeeSshTheme(
+                darkTheme = darkTheme,
+                appColorScheme = AppColorScheme.fromId(settings.appColorScheme),
+            ) {
                 AppNavHost()
             }
         }

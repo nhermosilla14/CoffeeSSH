@@ -12,6 +12,8 @@ data class IdentityDraft(
     val username: String = "",
     val password: String = "",
     val privateKey: String = "",
+    val publicKey: String? = null,
+    val keyType: String? = null,
 )
 
 class IdentitiesRepository(
@@ -29,6 +31,8 @@ class IdentitiesRepository(
             username = entity.username,
             password = entity.passwordEnc?.let(crypto::decryptToString).orEmpty(),
             privateKey = entity.privateKeyEnc?.let(crypto::decryptToString).orEmpty(),
+            publicKey = entity.publicKey,
+            keyType = entity.keyType,
         )
     }
 
@@ -42,6 +46,8 @@ class IdentitiesRepository(
                     username = draft.username.trim(),
                     passwordEnc = passwordEnc,
                     privateKeyEnc = privateKeyEnc,
+                    publicKey = draft.publicKey,
+                    keyType = draft.keyType,
                 ),
             )
         } else {
@@ -52,6 +58,8 @@ class IdentitiesRepository(
                     username = draft.username.trim(),
                     passwordEnc = passwordEnc,
                     privateKeyEnc = privateKeyEnc,
+                    publicKey = draft.publicKey,
+                    keyType = draft.keyType,
                 ),
             )
             draft.id

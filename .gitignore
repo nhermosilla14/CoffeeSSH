@@ -2,17 +2,76 @@
 .gradle/
 build/
 .kotlin/
+*/build/
+captures/
+
+# Android build and tooling output
+.cxx/
+.externalNativeBuild/
+*.apk
+*.aab
+*.apks
+*.hprof
+output-metadata.json
+
+# Local project-analysis and agent metadata
+.enola/
+.serena/
 
 # Android
 local.properties
-captures/
-*.apk
-*.aab
-*.hprof
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+*.secrets
+*.credentials
+*.credential
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+*.mobileprovision
+google-services.json
+
+# Local logs and runtime data
+*.log
+*.dump
+*.tmp
+*.swp
+*.swo
+reports/
+test-results/
+tmp/
+
+# SSH material and local fixtures
+id_rsa
+id_rsa.pub
+id_ed25519
+id_ed25519.pub
+known_hosts
+authorized_keys
+secrets/
+fixtures/local/
 
 # IDE
 .idea/
 *.iml
+.vscode/
+
+# OS metadata
+.project
+.classpath
+.settings/
 
 # Misc
 .DS_Store
+Thumbs.db

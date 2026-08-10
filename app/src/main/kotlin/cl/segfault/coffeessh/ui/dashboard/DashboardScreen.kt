@@ -29,7 +29,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,11 +45,13 @@ import cl.segfault.coffeessh.R
 fun DashboardScreen(
     onOpenConnections: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenAbout: () -> Unit,
     onOpenConnection: (Long) -> Unit,
+    onOpenActiveSession: (Long, String) -> Unit,
     viewModel: DashboardViewModel = viewModel(factory = DashboardViewModel.Factory),
 ) {
     val frequent by viewModel.frequent.collectAsStateWithLifecycle()
-    var showAbout by rememberSaveable { mutableStateOf(false) }
+    val activeSessions by viewModel.activeSessions.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -75,6 +76,37 @@ fun DashboardScreen(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item {
+                if (activeSessions.isNotEmpty()) {
+                    DashboardCard(
+                        titleRes = R.string.dashboard_active_title,
+                        subtitleRes = R.string.dashboard_active_subtitle,
+                        icon = Icons.Filled.Public,
+                        onClick = {},
+                    ) {
+                        Column(modifier = Modifier.padding(top = 12.dp)) {
+                            activeSessions.forEach { item ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { onOpenActiveSession(item.connection.connection.id, item.sessionId) }
+                                        .padding(vertical = 6.dp),
+                                ) {
+                                    Icon(Icons.Filled.Public, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.secondary)
+                                    Column(Modifier.padding(start = 16.dp)) {
+                                        Text(item.name ?: item.connection.connection.nickname ?: item.connection.connection.host)
+                                        Text(
+                                            "${item.connection.connection.host}:${item.connection.connection.port}",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             item {
                 DashboardCard(
                     titleRes = R.string.dashboard_connections_title,
@@ -143,24 +175,12 @@ fun DashboardScreen(
                     titleRes = R.string.dashboard_help_title,
                     subtitleRes = R.string.dashboard_help_subtitle,
                     icon = Icons.AutoMirrored.Filled.HelpOutline,
-                    onClick = { showAbout = true },
+                    onClick = onOpenAbout,
                 )
             }
         }
     }
 
-    if (showAbout) {
-        AlertDialog(
-            onDismissRequest = { showAbout = false },
-            title = { Text(stringResource(R.string.about_title)) },
-            text = { Text(stringResource(R.string.about_text)) },
-            confirmButton = {
-                TextButton(onClick = { showAbout = false }) {
-                    Text(stringResource(R.string.ok))
-                }
-            },
-        )
-    }
 }
 
 @Composable
