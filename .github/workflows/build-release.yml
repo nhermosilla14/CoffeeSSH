@@ -15,8 +15,7 @@ jobs:
     name: Build and publish APK
     runs-on: ubuntu-latest
     env:
-      # Keep CI builds above the current 3 while remaining monotonic per workflow run.
-      ANDROID_VERSION_CODE: ${{ 1000 + github.run_number }}
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
       ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
       ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}

@@ -12,6 +12,7 @@ val ciKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
 val ciVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
     .orNull
     ?.toIntOrNull()
+    ?.let { 1000 + it }
     ?: 3
 
 val hasCiSigning = listOf(
