@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "cl.segfault.coffeessh"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "cl.segfault.coffeessh"
