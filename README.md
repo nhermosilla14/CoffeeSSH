@@ -32,6 +32,16 @@ settings. English and Spanish are supported.
 ./gradlew :terminal:test         # terminal engine tests
 ```
 
+## GitHub Releases
+
+Every push to `main` publishes a signed APK as a timestamped prerelease nightly.
+Pushing a version tag such as `v0.4.0` publishes a normal GitHub Release with the
+same signed APK. The release signing key is stored only in GitHub Actions secrets;
+it must never be committed to the repository.
+
+The repository requires these Actions secrets: `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`.
+
 The SSH integration tests use a Docker OpenSSH server. See the test sources for
 the required container setup and connection details.
 

@@ -5,6 +5,26 @@ plugins {
     alias(libs.plugins.room)
 }
 
+val ciKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+val ciKeystorePassword = providers.environmentVariable("ANDROID_KEYSTORE_PASSWORD").orNull
+val ciKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+val ciKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+val ciVersionCode = providers.environmentVariable("ANDROID_VERSION_CODE")
+    .orNull
+    ?.toIntOrNull()
+    ?: 3
+
+val hasCiSigning = listOf(
+    ciKeystorePath,
+    ciKeystorePassword,
+    ciKeyAlias,
+    ciKeyPassword,
+).all { it != null }
+
+if (System.getenv("CI") == "true" && !hasCiSigning) {
+    error("CI release builds require the Android signing environment variables")
+}
+
 android {
     namespace = "cl.segfault.coffeessh"
     compileSdk = 36
@@ -13,7 +33,7 @@ android {
         applicationId = "cl.segfault.coffeessh"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
+        versionCode = ciVersionCode
         versionName = "0.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -22,8 +42,17 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Keep local release artifacts installable until a production keystore is supplied.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasCiSigning) {
+                signingConfigs.create("ciRelease").apply {
+                    storeFile = file(ciKeystorePath!!)
+                    storePassword = ciKeystorePassword
+                    keyAlias = ciKeyAlias
+                    keyPassword = ciKeyPassword
+                }
+            } else {
+                // Keep local release artifacts installable without exposing the CI key.
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
