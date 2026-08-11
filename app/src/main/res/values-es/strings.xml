@@ -30,8 +30,6 @@
     <string name="connections_empty">Aún no hay conexiones.\nToca + para crear una.</string>
     <string name="identities_empty">Aún no hay identidades.\nToca + para crear una.</string>
     <string name="manage_groups">Gestionar grupos</string>
-    <string name="terminal_demo_menu_item">Demo del motor de terminal (M2)</string>
-    <string name="terminal_demo_title">Demo de terminal</string>
 
     <string name="action_edit">Editar</string>
     <string name="action_duplicate">Duplicar</string>

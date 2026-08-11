@@ -29,7 +29,7 @@ import cl.segfault.coffeessh.terminal.TerminalColorScheme
 /**
  * Renders a [Terminal]'s grid to a [Canvas] and turns soft/hardware keyboard input into
  * the byte sequences a remote shell expects. Rendering-only and session-agnostic: callers
- * wire [onInput] to wherever bytes should go (a demo shell in M2, an SSH channel in M3).
+ * wire [onInput] to the active session's input channel.
  */
 class TerminalView @JvmOverloads constructor(
     context: Context,
@@ -67,7 +67,7 @@ class TerminalView @JvmOverloads constructor(
     private var readyFired = false
 
     /** Fires after every resize (including the first) with the new grid dimensions - wire
-     * this to a session's window-change request; safe to leave null (e.g. the M2 demo). */
+     * this to a session's window-change request. */
     var onResize: ((rows: Int, cols: Int) -> Unit)? = null
 
     var colorScheme: TerminalColorScheme = TerminalColorScheme.COFFEE

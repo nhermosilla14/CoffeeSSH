@@ -77,7 +77,6 @@ fun ConnectionsScreen(
     onNewIdentity: () -> Unit,
     onEditIdentity: (Long) -> Unit,
     onManageGroups: () -> Unit,
-    onOpenTerminalDemo: () -> Unit,
     viewModel: ConnectionsViewModel = viewModel(factory = ConnectionsViewModel.Factory),
 ) {
     val sections by viewModel.sections.collectAsStateWithLifecycle()
@@ -111,13 +110,6 @@ fun ConnectionsScreen(
                             onClick = {
                                 overflowOpen = false
                                 onManageGroups()
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.terminal_demo_menu_item)) },
-                            onClick = {
-                                overflowOpen = false
-                                onOpenTerminalDemo()
                             },
                         )
                     }

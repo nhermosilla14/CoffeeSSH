@@ -18,7 +18,6 @@ import cl.segfault.coffeessh.ui.about.OpenSourceLicensesScreen
 import cl.segfault.coffeessh.ui.groups.GroupsScreen
 import cl.segfault.coffeessh.ui.identities.IdentityEditorScreen
 import cl.segfault.coffeessh.ui.settings.SettingsScreen
-import cl.segfault.coffeessh.ui.terminal.TerminalDemoScreen
 import cl.segfault.coffeessh.ui.terminal.TerminalSessionScreen
 import cl.segfault.coffeessh.CoffeeSshApp
 
@@ -31,7 +30,6 @@ object Routes {
     const val CONNECTION_EDIT = "connection/{connectionId}"
     const val IDENTITY_NEW = "identity/new"
     const val IDENTITY_EDIT = "identity/{identityId}"
-    const val TERMINAL_DEMO = "terminal/demo"
     const val TERMINAL_SESSION = "terminal/session/{connectionId}/{sessionId}"
     const val ABOUT = "about"
     const val OPEN_SOURCE_LICENSES = "about/licenses"
@@ -74,7 +72,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
                 onNewIdentity = { navController.navigate(Routes.IDENTITY_NEW) },
                 onEditIdentity = { navController.navigate(Routes.identityEdit(it)) },
                 onManageGroups = { navController.navigate(Routes.GROUPS) },
-                onOpenTerminalDemo = { navController.navigate(Routes.TERMINAL_DEMO) },
             )
         }
         composable(Routes.CONNECTION_NEW) {
@@ -97,9 +94,6 @@ fun AppNavHost(navController: NavHostController = rememberNavController()) {
         }
         composable(Routes.GROUPS) {
             GroupsScreen(onBack = { navController.popBackStack() })
-        }
-        composable(Routes.TERMINAL_DEMO) {
-            TerminalDemoScreen(onBack = { navController.popBackStack() })
         }
         composable(
             route = Routes.TERMINAL_SESSION,
